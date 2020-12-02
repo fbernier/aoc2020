@@ -22,16 +22,6 @@ impl<'a> Line<'a> {
     }
 }
 
-fn load_lines() -> Vec<String> {
-    let file = File::open("input").unwrap();
-    let lines: Vec<_> = BufReader::new(&file)
-        .lines()
-        .collect::<Result<_, _>>()
-        .unwrap();
-
-    lines
-}
-
 fn is_valid_p1(line: &Line) -> bool {
     let count = line.text.matches(line.chr).count();
 
@@ -51,20 +41,24 @@ fn is_valid_p2(line: &Line) -> bool {
     return false;
 }
 
-fn main() {
+fn day2() -> (u32, u32) {
     let regex = Regex::new(r#"(\d+)-(\d+) (.): (.*)$"#).unwrap();
     let mut part1 = 0;
     let mut part2 = 0;
-    for line in load_lines() {
+    let file = File::open("input").unwrap();
+
+    for line in BufReader::new(&file).lines() {
+        let l = line.unwrap();
+
         let captures = regex
-            .captures(&line)
+            .captures(&l)
             .map(|captures| {
                 captures
-                    .iter() // All the captured groups
+                    .iter()
                     .skip(1) // Skipping the complete match
                     .flat_map(|c| c) // Ignoring all empty optional matches
                     .map(|c| c.as_str()) // Grab the original strings
-                    .collect::<Vec<_>>() // Create a vector
+                    .collect::<Vec<_>>()
             })
             .unwrap();
 
@@ -78,6 +72,22 @@ fn main() {
         };
     }
 
+    (part1, part2)
+}
+
+fn main() {
+    let (part1, part2) = day2();
+
     println!("{:?}", part1);
     println!("{:?}", part2);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn day1_test() {
+        assert_eq!(day2(), (536, 558));
+    }
 }
