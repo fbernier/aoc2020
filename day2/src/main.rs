@@ -20,25 +20,25 @@ impl<'a> Line<'a> {
             text: vec_line[3],
         }
     }
-}
 
-fn is_valid_p1(line: &Line) -> bool {
-    let count = line.text.matches(line.chr).count();
+    fn is_valid_p1(&self) -> bool {
+        let count = self.text.matches(self.chr).count();
 
-    if count >= line.lower && count <= line.higher {
-        return true;
+        if count >= self.lower && count <= self.higher {
+            return true;
+        }
+        return false;
     }
-    return false;
-}
 
-fn is_valid_p2(line: &Line) -> bool {
-    let pos1 = line.text.chars().nth(line.lower - 1).unwrap();
-    let pos2 = line.text.chars().nth(line.higher - 1).unwrap();
+    fn is_valid_p2(&self) -> bool {
+        let pos1 = self.text.chars().nth(self.lower - 1).unwrap();
+        let pos2 = self.text.chars().nth(self.higher - 1).unwrap();
 
-    if (pos1 == line.chr || pos2 == line.chr) && pos1 != pos2 {
-        return true;
+        if (pos1 == self.chr || pos2 == self.chr) && pos1 != pos2 {
+            return true;
+        }
+        return false;
     }
-    return false;
 }
 
 fn day2() -> (u32, u32) {
@@ -47,27 +47,26 @@ fn day2() -> (u32, u32) {
     let mut part2 = 0;
     let file = File::open("input").unwrap();
 
-    for line in BufReader::new(&file).lines() {
-        let l = line.unwrap();
+    for str_line in BufReader::new(&file).lines() {
+        let str_line = str_line.unwrap();
 
         let captures = regex
-            .captures(&l)
+            .captures(&str_line)
             .map(|captures| {
                 captures
                     .iter()
                     .skip(1) // Skipping the complete match
-                    .flat_map(|c| c) // Ignoring all empty optional matches
-                    .map(|c| c.as_str()) // Grab the original strings
+                    .map(|c| c.unwrap().as_str()) // Grab the original strings
                     .collect::<Vec<_>>()
             })
             .unwrap();
 
-        let l = Line::new(&captures);
+        let line = Line::new(&captures);
 
-        if is_valid_p1(&l) {
+        if line.is_valid_p1() {
             part1 += 1
         };
-        if is_valid_p2(&l) {
+        if line.is_valid_p2() {
             part2 += 1
         };
     }
@@ -77,9 +76,7 @@ fn day2() -> (u32, u32) {
 
 fn main() {
     let (part1, part2) = day2();
-
-    println!("{:?}", part1);
-    println!("{:?}", part2);
+    println!("part1: {:?}, part2: {:?}", part1, part2);
 }
 
 #[cfg(test)]
