@@ -1,43 +1,89 @@
 const INPUT: &str = include_str!("../input");
 
 #[derive(Debug)]
-struct VM {
-    accumulator: isize,
-    current_pos: isize,
-    previous: Vec<isize>,
+struct VM<'a> {
+    acc: isize,
+    pc: isize,
+    prevs: Vec<isize>,
+    prog: &'a Vec<Instruction<'a>>,
+}
+
+#[derive(Debug)]
+struct Instruction<'a> {
+    op: &'a str,
+    arg: isize,
+}
+
+static mut a: u32 = 0;
+
+impl<'a> VM<'a> {
+    fn step(&mut self) {
+        match self.prog[self.pc as usize].op {
+            "nop" => (),
+            "acc" => self.acc += self.prog[self.pc as usize].arg,
+            "jmp" => {
+                self.pc += self.prog[self.pc as usize].arg;
+                return
+            }
+            _ => panic!("derp"),
+        }
+
+        self.pc += 1;
+    }
+
+    fn build_and_run_till(prog: &'a Vec<Instruction<'a>>) -> VM<'a> {
+        let mut vm = VM {
+            acc: 0,
+            pc: 0,
+            prevs: vec![0; prog.len()],
+            prog,
+        };
+
+        loop {
+            if (vm.pc as usize) >= vm.prog.len() || vm.prevs[vm.pc as usize] != 0 {
+                return vm
+            }
+            vm.prevs[vm.pc as usize] += 1;
+            vm.step();
+        }
+    }
 }
 
 fn main() {
-    let lines: Vec<(&str, isize)> = INPUT
+    let mut lines: Vec<Instruction> = INPUT
         .lines()
         .collect::<Vec<&str>>()
         .iter()
         .map(|l| {
             let v: Vec<&str> = l.split(" ").collect();
-            (v[0], v[1].parse().unwrap())
+            Instruction {
+                op: v[0],
+                arg: v[1].parse().unwrap(),
+            }
         })
         .collect();
+    let len = lines.len();
 
-    let mut vm = VM {
-        accumulator: 0,
-        current_pos: 0,
-        previous: vec![],
-    };
+    let vm = VM::build_and_run_till(&lines);
+    println!("part1: {:?}", vm.acc);
 
-    loop {
-        let instruction = lines[vm.current_pos as usize];
-        if vm.previous.contains(&vm.current_pos) {
-            println!("part1: {:?}", vm.accumulator);
-            break;
-        }
-        vm.previous.push(vm.current_pos);
-        vm.current_pos += 1;
-
-        match instruction.0 {
-            "nop" => continue,
-            "acc" => vm.accumulator += instruction.1,
-            "jmp" => vm.current_pos += instruction.1 - 1,
-            _ => panic!("derp")
+    let mut part2 = 0;
+    for i in 0..lines.len() {
+        match lines[i].op {
+            "nop" => {
+                lines[i].op = "jmp";
+                let vm = VM::build_and_run_till(&lines);
+                if len == vm.pc as usize { part2 = vm.acc; break }
+                lines[i].op = "nop";
+            },
+            "jmp" => {
+                lines[i].op = "nop";
+                let vm = VM::build_and_run_till(&lines);
+                if len == vm.pc as usize { part2 = vm.acc; break }
+                lines[i].op = "jmp";
+            },
+            _ => ()
         }
     }
+    println!("part1: {:?}", part2);
 }
